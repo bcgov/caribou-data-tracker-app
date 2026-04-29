@@ -48,11 +48,4 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-# Temp folder
-temp/
-
-# Data
-data/
-
-
 .positai
