@@ -6,9 +6,9 @@ fluidPage(
   sidebarLayout(
     sidebarPanel(
       h3("Filter Options"),
-      textInput("serial", "Device serial(s):", placeholder = "Enter device serial # (comma separated)"),
-      textInput("wlh_id", "WLH ID(s):", placeholder = "Enter WLH ID (comma separated)"),
-      checkboxInput("filter_sims_devices", "Only show records missing from SIMS", FALSE), # TODO: inverse this
+      selectizeInput("serial", "Device serial(s):", choices = NULL, multiple = TRUE, options = list(placeholder = "Enter a device serial #")),
+      selectizeInput("wlh_id", "WLH ID(s):", choices = NULL, multiple = TRUE, options = list(placeholder = "Enter WLH ID")),
+      checkboxInput("filter_sims_devices", "Only show records missing from SIMS", FALSE), 
       actionButton("submit", "Search", class = "btn-primary"),
       actionButton("reset", "Reset"),
       h6("If entering both serial number and WLH ID, tables will be filtered using OR logic. (E.g., will show any records where device serial OR WLH ID match.)"),

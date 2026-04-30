@@ -15,6 +15,14 @@ library(dplyr)
 # Connect to database
 conn <- dbConnect(RSQLite::SQLite(), dbname = "data/caribou-data-tracker-app-dat.db")
 
+# Pull a list of all possible serial numbers (for use in selectize input)
+all_sns <- c(dbGetQuery(conn, "select distinct(serial) from sims_devices;")[[1]],
+             dbGetQuery(conn, "select distinct(serial) from key_files;")[[1]],
+             dbGetQuery(conn, "select distinct(serial) from caribou_dat;")[[1]]) |>
+  unique()
+
+# Pull a list of all possible WLH IDs (for use in selectize input)
+all_wlh_ids <- dbGetQuery(conn, "select distinct(wlh_id) from caribou_dat;")[[1]]
 
 # GLOBAL PARAMS -----------------------------------------------------------
 

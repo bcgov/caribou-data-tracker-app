@@ -1,5 +1,11 @@
 # Define server logic
 function(input, output, session) {
+  
+  # Update selectize options
+  # Using server-side selectize for speed optimization: https://shiny.posit.co/r/articles/build/selectize/
+  updateSelectizeInput(session, "serial", choices = all_sns, server = TRUE)
+  updateSelectizeInput(session, "wlh_id", choices = all_wlh_ids, server = TRUE)
+  
   # Reactive values to store results
   results <- reactiveValues(
     sims_devices = DBI::dbReadTable(conn, "sims_devices"),
@@ -7,8 +13,6 @@ function(input, output, session) {
     caribou_dat = DBI::dbReadTable(conn, "caribou_dat"),
     summary = NULL
   )
-  
-  
   
   # Query function
   query_database <- function() {
