@@ -1,5 +1,5 @@
 # Reset function
-reset_inputs <- function() {
+reset_inputs <- function(session) {
   updateTextInput(session, "serial", value = "")
   updateTextInput(session, "wlh_id", value = "")
   updateCheckboxInput(session, "filter_sims_devices", value = FALSE)

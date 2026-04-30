@@ -1,15 +1,14 @@
 # Define server logic
-server <- function(input, output, session) {
+function(input, output, session) {
   # Reactive values to store results
   results <- reactiveValues(
-    sims_devices = NULL,
-    key_files = NULL,
-    caribou_dat = NULL,
+    sims_devices = sims_devices,
+    key_files = key_files,
+    caribou_dat = caribou_dat,
     summary = NULL
   )
   
-  # Connect to database
-  conn <- dbConnect(RSQLite::SQLite(), dbname = "data/caribou-data-tracker-app-dat.db")
+  
   
   # Query function
   query_database <- function() {
@@ -17,54 +16,15 @@ server <- function(input, output, session) {
     wlh_id_input <- input$wlh_id
     filter_sims <- input$filter_sims_devices
     
-    # If both inputs are empty, show message
-    if (serial_input == "" && wlh_id_input == "") {
-      results$sims_devices <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      results$key_files <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      results$caribou_dat <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      results$summary <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      return()
-    }
-    
     # Query sims_devices table
-    sims_query <- "SELECT * FROM sims_devices WHERE 1=1"
-    if (serial_input != "") {
-      sims_query <- paste0(sims_query, " AND serial = '", serial_input, "'")
-    }
-    
-    tryCatch({
-      results$sims_devices <- dbGetQuery(conn, sims_query)
-    }, error = function(e) {
-      results$sims_devices <- data.frame(error = paste("Error querying sims_devices:", e$message))
-    })
-    
+    results$sims_devices <- query_sims_devices(serial_input, wlh_id_input)
+
     # Query key_files table
-    key_query <- "SELECT * FROM key_files WHERE 1=1"
-    if (serial_input != "") {
-      key_query <- paste0(key_query, " AND serial = '", serial_input, "'")
-    }
-    
-    tryCatch({
-      results$key_files <- dbGetQuery(conn, key_query)
-    }, error = function(e) {
-      results$key_files <- data.frame(error = paste("Error querying key_files:", e$message))
-    })
+    results$key_files <- query_key_files(serial_input, wlh_id_input)
     
     # Query caribou_dat table
-    caribou_query <- "SELECT * FROM caribou_dat WHERE 1=1"
-    if (serial_input != "") {
-      caribou_query <- paste0(caribou_query, " AND serial = '", serial_input, "'")
-    }
-    if (wlh_id_input != "") {
-      caribou_query <- paste0(caribou_query, " AND wlh_id = '", wlh_id_input, "'")
-    }
-    
-    tryCatch({
-      results$caribou_dat <- dbGetQuery(conn, caribou_query)
-    }, error = function(e) {
-      results$caribou_dat <- data.frame(error = paste("Error querying caribou_dat:", e$message))
-    })
-    
+    results$caribou_dat <- query_caribou_dat(serial_input, wlh_id_input)
+
     # Create summary
     summary_data <- data.frame(
       Table = c("sims_devices", "key_files", "caribou_dat"),

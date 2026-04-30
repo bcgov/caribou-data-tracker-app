@@ -1,6 +1,6 @@
 
 # Define UI
-ui <- fluidPage(
+fluidPage(
   titlePanel("Caribou Data Tracker - Database Explorer"),
   
   sidebarLayout(
@@ -8,9 +8,9 @@ ui <- fluidPage(
       h3("Filter Options"),
       textInput("serial", "Device serial:", placeholder = "Enter device serial #"),
       textInput("wlh_id", "WLH ID:", placeholder = "Enter WLH ID"),
-      checkboxInput("filter_sims_devices", "Only show records missing from SIMS", FALSE), # TODO: inverse this
+      #checkboxInput("filter_sims_devices", "Only show records missing from SIMS", FALSE), # TODO: inverse this
       actionButton("submit", "Search", class = "btn-primary"),
-      actionButton("reset", "Reset"),
+      #actionButton("reset", "Reset"),
       hr(),
       h4("Summary"),
       uiOutput("summary"),
