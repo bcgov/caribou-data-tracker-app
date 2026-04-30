@@ -1,15 +1,18 @@
 # Define server logic
-server <- function(input, output, session) {
+function(input, output, session) {
+  
+  # Update selectize options
+  # Using server-side selectize for speed optimization: https://shiny.posit.co/r/articles/build/selectize/
+  updateSelectizeInput(session, "serial", choices = all_sns, server = TRUE)
+  updateSelectizeInput(session, "wlh_id", choices = all_wlh_ids, server = TRUE)
+  
   # Reactive values to store results
   results <- reactiveValues(
-    sims_devices = NULL,
-    key_files = NULL,
-    caribou_dat = NULL,
+    sims_devices = DBI::dbReadTable(conn, "sims_devices"),
+    key_files = DBI::dbReadTable(conn, "key_files"),
+    caribou_dat = DBI::dbReadTable(conn, "caribou_dat"),
     summary = NULL
   )
-  
-  # Connect to database
-  conn <- dbConnect(RSQLite::SQLite(), dbname = "data/caribou-data-tracker-app-dat.db")
   
   # Query function
   query_database <- function() {
@@ -17,54 +20,27 @@ server <- function(input, output, session) {
     wlh_id_input <- input$wlh_id
     filter_sims <- input$filter_sims_devices
     
-    # If both inputs are empty, show message
-    if (serial_input == "" && wlh_id_input == "") {
-      results$sims_devices <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      results$key_files <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      results$caribou_dat <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      results$summary <- data.frame(message = "Please enter a Device ID or WLH ID to search")
-      return()
+    message("Serial input: ", serial_input)
+    message("WLH ID input: ", wlh_id_input)
+    message("Input logic: ", input_logic(serial_input, wlh_id_input))
+    message("Filter SIMS: ", filter_sims)
+    
+    # Query sims_devices, key_files, and caribou_dat tables
+    if (filter_sims) {
+      # If we're filtering to only stuff MISSING from SIMS
+      serials_in_sims <- DBI::dbGetQuery(conn, "select distinct(serial) from sims_devices;")
+      results$sims_devices <- data.frame(message = "See other tabs to check devices missing from SIMS")
+      results$key_files <- query_key_files(serial_input, wlh_id_input) |>
+        dplyr::filter(!(serial %in% serials_in_sims))
+      results$caribou_dat <- query_caribou_dat(serial_input, wlh_id_input) |>
+        dplyr::filter(!(serial %in% serials_in_sims))
+    } else {
+      # Else including stuff that is already in SIMS
+      results$sims_devices <- query_sims_devices(serial_input, wlh_id_input)
+      results$key_files <- query_key_files(serial_input, wlh_id_input)
+      results$caribou_dat <- query_caribou_dat(serial_input, wlh_id_input)
     }
-    
-    # Query sims_devices table
-    sims_query <- "SELECT * FROM sims_devices WHERE 1=1"
-    if (serial_input != "") {
-      sims_query <- paste0(sims_query, " AND serial = '", serial_input, "'")
-    }
-    
-    tryCatch({
-      results$sims_devices <- dbGetQuery(conn, sims_query)
-    }, error = function(e) {
-      results$sims_devices <- data.frame(error = paste("Error querying sims_devices:", e$message))
-    })
-    
-    # Query key_files table
-    key_query <- "SELECT * FROM key_files WHERE 1=1"
-    if (serial_input != "") {
-      key_query <- paste0(key_query, " AND serial = '", serial_input, "'")
-    }
-    
-    tryCatch({
-      results$key_files <- dbGetQuery(conn, key_query)
-    }, error = function(e) {
-      results$key_files <- data.frame(error = paste("Error querying key_files:", e$message))
-    })
-    
-    # Query caribou_dat table
-    caribou_query <- "SELECT * FROM caribou_dat WHERE 1=1"
-    if (serial_input != "") {
-      caribou_query <- paste0(caribou_query, " AND serial = '", serial_input, "'")
-    }
-    if (wlh_id_input != "") {
-      caribou_query <- paste0(caribou_query, " AND wlh_id = '", wlh_id_input, "'")
-    }
-    
-    tryCatch({
-      results$caribou_dat <- dbGetQuery(conn, caribou_query)
-    }, error = function(e) {
-      results$caribou_dat <- data.frame(error = paste("Error querying caribou_dat:", e$message))
-    })
-    
+
     # Create summary
     summary_data <- data.frame(
       Table = c("sims_devices", "key_files", "caribou_dat"),
@@ -80,6 +56,18 @@ server <- function(input, output, session) {
       )
     )
     results$summary <- summary_data
+  }
+  
+  # Reset function
+  reset_inputs <- function() {
+    updateTextInput(session, "serial", value = "")
+    updateTextInput(session, "wlh_id", value = "")
+    updateCheckboxInput(session, "filter_sims_devices", value = FALSE)
+    results$sims_devices <- DBI::dbReadTable(conn, "sims_devices")
+    results$key_files <- DBI::dbReadTable(conn, "key_files")
+    results$caribou_dat <- DBI::dbReadTable(conn, "caribou_dat")
+    results$summary <- NULL
+    message("Reset")
   }
   
   # Observe submit button
@@ -98,26 +86,26 @@ server <- function(input, output, session) {
   })
   
   # Render tables
-  output$sims_devices_table <- renderTable({
+  output$sims_devices_table <- renderDT({
     if (is.null(results$sims_devices)) {
       return(data.frame())
     }
     results$sims_devices
-  }, striped = TRUE, hover = TRUE)
+  })
   
-  output$key_files_table <- renderTable({
+  output$key_files_table <- renderDT({
     if (is.null(results$key_files)) {
       return(data.frame())
     }
     results$key_files
-  }, striped = TRUE, hover = TRUE)
+  })
   
-  output$caribou_dat_table <- renderTable({
+  output$caribou_dat_table <- renderDT({
     if (is.null(results$caribou_dat)) {
       return(data.frame())
     }
     results$caribou_dat
-  }, striped = TRUE, hover = TRUE)
+  })
   
   output$summary_table <- renderTable({
     if (is.null(results$summary)) {
