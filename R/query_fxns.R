@@ -13,6 +13,9 @@ clean_input <- function(input) {
 # Function to check the logic of the supplied inputs -
 # were device serials supplied, WLH IDs supplied, or both?
 input_logic <- function(input_serial, input_wlh_id) {
+  input_serial <- clean_input(input_serial)
+  input_wlh_id <- clean_input(input_wlh_id)
+  
   serial_na_yn <- all(is.na(input_serial))
   wlh_na_yn <- all(is.na(input_wlh_id))
   

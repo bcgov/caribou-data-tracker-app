@@ -16,14 +16,26 @@ function(input, output, session) {
     wlh_id_input <- input$wlh_id
     filter_sims <- input$filter_sims_devices
     
-    # Query sims_devices table
-    results$sims_devices <- query_sims_devices(serial_input, wlh_id_input)
-
-    # Query key_files table
-    results$key_files <- query_key_files(serial_input, wlh_id_input)
+    message("Serial input: ", serial_input)
+    message("WLH ID input: ", wlh_id_input)
+    message("Input logic: ", input_logic(serial_input, wlh_id_input))
+    message("Filter SIMS: ", filter_sims)
     
-    # Query caribou_dat table
-    results$caribou_dat <- query_caribou_dat(serial_input, wlh_id_input)
+    # Query sims_devices, key_files, and caribou_dat tables
+    if (filter_sims) {
+      # If we're filtering to only stuff MISSING from SIMS
+      serials_in_sims <- DBI::dbGetQuery(conn, "select distinct(serial) from sims_devices;")
+      results$sims_devices <- data.frame(message = "See other tabs to check devices missing from SIMS")
+      results$key_files <- query_key_files(serial_input, wlh_id_input) |>
+        dplyr::filter(!(serial %in% serials_in_sims))
+      results$caribou_dat <- query_caribou_dat(serial_input, wlh_id_input) |>
+        dplyr::filter(!(serial %in% serials_in_sims))
+    } else {
+      # Else including stuff that is already in SIMS
+      results$sims_devices <- query_sims_devices(serial_input, wlh_id_input)
+      results$key_files <- query_key_files(serial_input, wlh_id_input)
+      results$caribou_dat <- query_caribou_dat(serial_input, wlh_id_input)
+    }
 
     # Create summary
     summary_data <- data.frame(
@@ -51,6 +63,7 @@ function(input, output, session) {
     results$key_files <- DBI::dbReadTable(conn, "key_files")
     results$caribou_dat <- DBI::dbReadTable(conn, "caribou_dat")
     results$summary <- NULL
+    message("Reset")
   }
   
   # Observe submit button
