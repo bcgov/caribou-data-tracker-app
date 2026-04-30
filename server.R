@@ -98,26 +98,26 @@ server <- function(input, output, session) {
   })
   
   # Render tables
-  output$sims_devices_table <- renderTable({
+  output$sims_devices_table <- renderDT({
     if (is.null(results$sims_devices)) {
       return(data.frame())
     }
     results$sims_devices
-  }, striped = TRUE, hover = TRUE)
+  })
   
-  output$key_files_table <- renderTable({
+  output$key_files_table <- renderDT({
     if (is.null(results$key_files)) {
       return(data.frame())
     }
     results$key_files
-  }, striped = TRUE, hover = TRUE)
+  })
   
-  output$caribou_dat_table <- renderTable({
+  output$caribou_dat_table <- renderDT({
     if (is.null(results$caribou_dat)) {
       return(data.frame())
     }
     results$caribou_dat
-  }, striped = TRUE, hover = TRUE)
+  })
   
   output$summary_table <- renderTable({
     if (is.null(results$summary)) {

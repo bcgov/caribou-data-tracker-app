@@ -4,6 +4,7 @@
 library(shiny)
 library(DBI)
 library(RSQLite)
+library(DT)
 
 
 # Global params -----------------------------------------------------------
