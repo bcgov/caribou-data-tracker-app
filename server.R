@@ -28,7 +28,7 @@ function(input, output, session) {
     # Query sims_devices, key_files, and caribou_dat tables
     if (filter_sims) {
       # If we're filtering to only stuff MISSING from SIMS
-      serials_in_sims <- DBI::dbGetQuery(conn, "select distinct(serial) from sims_devices;")
+      serials_in_sims <- DBI::dbGetQuery(conn, "select distinct(serial) from sims_devices;")[[1]]
       results$sims_devices <- data.frame(message = "See other tabs to check devices missing from SIMS")
       results$key_files <- query_key_files(serial_input, wlh_id_input) |>
         dplyr::filter(!(serial %in% serials_in_sims))
