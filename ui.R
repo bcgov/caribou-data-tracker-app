@@ -16,7 +16,8 @@ fluidPage(
       h4("Summary"),
       uiOutput("summary"),
       hr(),
-      actionButton("refresh_sims_devices", "Refresh SIMS devices", class = "btn-primary")
+      actionButton("refresh_sims_devices", "Refresh SIMS devices", class = "btn-primary"),
+      width = 2
     ),
     
     mainPanel(
