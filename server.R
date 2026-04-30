@@ -2,9 +2,9 @@
 function(input, output, session) {
   # Reactive values to store results
   results <- reactiveValues(
-    sims_devices = sims_devices,
-    key_files = key_files,
-    caribou_dat = caribou_dat,
+    sims_devices = DBI::dbReadTable(conn, "sims_devices"),
+    key_files = DBI::dbReadTable(conn, "key_files"),
+    caribou_dat = DBI::dbReadTable(conn, "caribou_dat"),
     summary = NULL
   )
   
@@ -40,6 +40,17 @@ function(input, output, session) {
       )
     )
     results$summary <- summary_data
+  }
+  
+  # Reset function
+  reset_inputs <- function() {
+    updateTextInput(session, "serial", value = "")
+    updateTextInput(session, "wlh_id", value = "")
+    updateCheckboxInput(session, "filter_sims_devices", value = FALSE)
+    results$sims_devices <- DBI::dbReadTable(conn, "sims_devices")
+    results$key_files <- DBI::dbReadTable(conn, "key_files")
+    results$caribou_dat <- DBI::dbReadTable(conn, "caribou_dat")
+    results$summary <- NULL
   }
   
   # Observe submit button
